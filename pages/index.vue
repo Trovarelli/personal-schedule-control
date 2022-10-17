@@ -8,7 +8,6 @@
         <v-form ref="form" v-model="valid" lazy-validation class="pa-7">
           <v-text-field
             color="indigo"
-            class="py-5"
             v-model="userName"
             :rules="userNameRules"
             label="Nome de usuário"
@@ -17,7 +16,6 @@
 
           <v-text-field
             color="indigo"
-            class="py-5"
             type="password"
             v-model="password"
             :rules="passwordRules"
@@ -25,12 +23,12 @@
             required
           ></v-text-field>
 
-          <!-- <v-checkbox
+          <v-checkbox
             v-model="checkbox"
-            :rules="[(v) => !!v || 'You must agree to continue!']"
-            label="Do you agree?"
+            class="pb-5"
+            label="Lembrar-se"
             required
-          ></v-checkbox> -->
+          ></v-checkbox>
 
           <div class="d-flex justify-space-between align-end cad-message">
             <v-btn
@@ -62,10 +60,8 @@ import { useNuxtApp } from "#app";
 //         /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{8,}$/.test(v) ||
 //         "A senha deve ter letras e números",
 export default {
-  setup() {
-    const { $showToast } = useNuxtApp();
-  },
   data: () => ({
+    showToast: useNuxtApp().showToast,
     loading: false,
     valid: true,
     password: "",
@@ -76,12 +72,13 @@ export default {
     baseUrl: "https://metawaydemo.vps-kinghost.net:8485/api",
   }),
 
-  beforeMount() {
-    console.log(process.env.BASEURL);
-    const user = JSON.parse(sessionStorage.getItem("user"));
+  async beforeMount() {
+    const user = JSON.parse(sessionStorage.getItem("userMemory"));
     if (user !== null) {
-      this.userName = user.username;
+      this.userName = user.userName;
+      this.password = user.password;
     }
+    await login();
   },
 
   methods: {
@@ -123,12 +120,24 @@ export default {
         body: user,
       })
         .then((resp) => {
+          if (this.checkbox)
+            localStorage.setItem("userMemory", JSON.stringify(user));
           sessionStorage.setItem("user", JSON.stringify(resp));
+          this.$showToast(
+            `Olá ${resp.username}, seja bem vindo(a)!`,
+            "success",
+            4000
+          );
         })
         .catch((err) => {
-          console.log(err);
-          const { $showToast } = useNuxtApp();
-          $showToast("Hello world", "info", 2000);
+          if (err.response.status === 401)
+            this.$showToast("Usuário ou senha invalidos", "error", 4000);
+          else
+            this.$showToast(
+              "Erro interno, por favor tente novamente mais tarde",
+              "error",
+              4000
+            );
         })
         .finally(() => (this.loading = false));
     },

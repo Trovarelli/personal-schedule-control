@@ -6,15 +6,16 @@
       v-bind:class="{ 'index-nav': !indexRoute }"
     >
       <div v-if="indexRoute">
-        <a @click="this.$router.push('/logged')" class="nav-link">Home</a>
-        <a @click="this.$router.push('/')" class="nav-link">Meu Cadastro</a>
-        <a @click="this.$router.push('/')" class="nav-link">Usuários</a>
-        <a @click="this.$router.push('/')" class="nav-link">Pessoas</a>
-        <a @click="this.$router.push('/')" class="nav-link">Contatos</a>
-      </div>
-      <div v-else></div>
-      <div>
-        <a @click="this.$router.push('/')" class="nav-link r">Login</a>
+        <div>
+          <a @click="navigateTo('/logged')" class="nav-link">Home</a>
+          <a @click="navigateTo('/')" class="nav-link">Meu Cadastro</a>
+          <a @click="navigateTo('/')" class="nav-link">Usuários</a>
+          <a @click="navigateTo('/')" class="nav-link">Pessoas</a>
+          <a @click="navigateTo('/')" class="nav-link">Contatos</a>
+        </div>
+        <div>
+          <a @click="this.$router.push('/')" class="nav-link r">Login</a>
+        </div>
       </div>
     </div>
   </div>
@@ -57,6 +58,11 @@ export default {
         this.$vuetify.display.name === "xs" ||
         this.$vuetify.display.name === "sm"
       );
+    },
+  },
+  methods: {
+    navigateTo(route) {
+      this.$router.push(route);
     },
   },
 };
