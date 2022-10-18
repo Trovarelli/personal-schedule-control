@@ -56,10 +56,19 @@
 </template>
 <script>
 import { useNuxtApp } from "#app";
+import { useCookies } from "vue3-cookies";
 // (v) =>
 //         /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{8,}$/.test(v) ||
 //         "A senha deve ter letras e números",
 export default {
+  setup() {
+    const { cookies } = useCookies();
+
+    definePageMeta({
+      middleware: "redirect",
+    });
+    return { cookies };
+  },
   data: () => ({
     showToast: useNuxtApp().showToast,
     loading: false,
@@ -73,12 +82,12 @@ export default {
   }),
 
   async beforeMount() {
-    const user = JSON.parse(sessionStorage.getItem("userMemory"));
-    if (user !== null) {
-      this.userName = user.userName;
-      this.password = user.password;
+    const userCookie = this.cookies.get("user");
+    if (userCookie?.value !== undefined) {
+      this.userName = userCookie.username;
+      this.password = userCookie.password;
+      await this.login();
     }
-    await login();
   },
 
   methods: {
@@ -86,12 +95,11 @@ export default {
       const user = JSON.parse(sessionStorage.getItem("user"));
       const auth = `${user.tokenType} ${user.accessToken}`;
       const payload = {
-        tipos: "ROLE_USER",
+        tipos: ["ROLE_ADMIN"],
         usuario: {
           cpf: "091.958.580-91",
           dataNascimento: "1995-05-19",
-          email: "neto4971@gmail.com",
-          id: 21251,
+          email: "neto49712@gmail.com",
           nome: "netoAdmin",
           password: "123456",
           telefone: "14991886974",
@@ -120,9 +128,24 @@ export default {
         body: user,
       })
         .then((resp) => {
-          if (this.checkbox)
-            localStorage.setItem("userMemory", JSON.stringify(user));
-          sessionStorage.setItem("user", JSON.stringify(resp));
+          if (this.checkbox) {
+            //TODO encrypt data
+            // const userName = CryptoJS.AES.encrypt(
+            //   this.userName,
+            //   this.secret
+            // ).toString();
+            // const password = CryptoJS.AES.encrypt(
+            //   this.password,
+            //   this.secret
+            // ).toString();
+            // const encryptedUser = {
+            //   password: password,
+            //   username: userName,
+            // };
+            this.cookies.set("user", user);
+          }
+          this.cookies.set("userAuth", resp);
+          this.$router.push("/logged");
           this.$showToast(
             `Olá ${resp.username}, seja bem vindo(a)!`,
             "success",
@@ -130,7 +153,7 @@ export default {
           );
         })
         .catch((err) => {
-          if (err.response.status === 401)
+          if (err.response?.status === 401)
             this.$showToast("Usuário ou senha invalidos", "error", 4000);
           else
             this.$showToast(
@@ -149,12 +172,12 @@ export default {
         this.login();
       }
     },
-    reset() {
-      this.$refs.form.reset();
-    },
-    resetValidation() {
-      this.$refs.form.resetValidation();
-    },
+    // reset() {
+    //   this.$refs.form.reset();
+    // },
+    // resetValidation() {
+    //   this.$refs.form.resetValidation();
+    // },
   },
 };
 </script>

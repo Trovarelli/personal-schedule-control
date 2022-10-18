@@ -1,11 +1,10 @@
 <template>
   <div class="navigator">
-    <div
-      v-if="!isMobile"
-      class="nav-bar d-flex justify-space-between align-center"
-      v-bind:class="{ 'index-nav': !indexRoute }"
-    >
-      <div v-if="indexRoute">
+    <div v-if="!isMobile" v-bind:class="{ 'index-nav': !indexRoute }">
+      <div
+        class="nav-bar d-flex justify-space-between align-center"
+        v-if="indexRoute"
+      >
         <div>
           <a @click="navigateTo('/logged')" class="nav-link">Home</a>
           <a @click="navigateTo('/')" class="nav-link">Meu Cadastro</a>
@@ -13,40 +12,23 @@
           <a @click="navigateTo('/')" class="nav-link">Pessoas</a>
           <a @click="navigateTo('/')" class="nav-link">Contatos</a>
         </div>
-        <div>
-          <a @click="this.$router.push('/')" class="nav-link r">Login</a>
-        </div>
+
+        <a @click="loggout" class="nav-link r">Sair</a>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import { useCookies } from "vue3-cookies";
 export default {
-  data() {
-    return {
-      drawer: true,
-      itemsMobile: [
-        { title: "Home", icon: "mdi-home-city" },
-        { title: "My Account", icon: "mdi-account" },
-        { title: "Users", icon: "mdi-account-group-outline" },
-      ],
-      items: [
-        {
-          name: "Item #1",
-          id: 1,
-        },
-        {
-          name: "Item #2",
-          id: 2,
-        },
-        {
-          name: "Item #3",
-          id: 3,
-        },
-      ],
-      rail: true,
-    };
+  setup() {
+    const { cookies } = useCookies();
+
+    definePageMeta({
+      middleware: "redirect",
+    });
+    return { cookies };
   },
 
   computed: {
@@ -64,6 +46,12 @@ export default {
     navigateTo(route) {
       this.$router.push(route);
     },
+    loggout() {
+      this.loading = true;
+      this.cookies.set("user", null);
+
+      this.$router.push("/");
+    },
   },
 };
 </script>
@@ -74,7 +62,7 @@ export default {
 }
 .nav-bar {
   width: 100%;
-  background: black;
+  background: #5c6bc0;
   height: 50px;
   padding: 0 4vw 0 4vw;
 
