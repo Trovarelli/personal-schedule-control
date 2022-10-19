@@ -154,17 +154,14 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.container {
-  padding: 0 4vw 0 4vw;
-
-  .cad-message {
-    font-size: 14px;
-    .cad-link {
-      cursor: pointer;
-      color: #5c6bc0;
-    }
+.cad-message {
+  font-size: 14px;
+  .cad-link {
+    cursor: pointer;
+    color: #5c6bc0;
   }
 }
+
 .banner {
   background-image: url("./assets/img/banner.jpg");
   background-size: cover;

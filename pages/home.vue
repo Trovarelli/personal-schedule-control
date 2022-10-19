@@ -1,10 +1,10 @@
 <template>
   <div class="container d-flex flex-column justify-center align-end mt-12">
-    <v-dialog v-model="dialog" width="500" persistent>
+    <v-dialog v-model="cadPessoa" width="500" persistent>
       <template v-slot:activator="{ on, attrs }">
         <v-btn
           class="mx-2"
-          @click="createContact()"
+          @click="createContact"
           elevation="0"
           color="success"
           v-bind="attrs"
@@ -13,7 +13,6 @@
           Adicionar Contato
         </v-btn>
       </template>
-
       <v-card>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -21,7 +20,7 @@
           <v-btn
             color="red-darken-4"
             text
-            @click="dialog = false"
+            @click="cadPessoa = false"
             :disabled="loading"
           >
             Cancelar
@@ -77,12 +76,6 @@
             label="Tipo de contato (telefone, email etc..)"
             required
           ></v-text-field>
-          <v-file-input
-            accept="image/*"
-            label="Foto"
-            :rules="required"
-            v-model="file"
-          ></v-file-input>
           <v-card-title class="text-h5 grey lighten-2"> Endereço </v-card-title>
           <v-text-field
             color="indigo"
@@ -186,7 +179,7 @@
         <td>
           <v-btn
             class="mx-2"
-            @click="favorite(contact)"
+            @click="modifyContact(contact.email)"
             elevation="0"
             color="amber"
           >
@@ -194,7 +187,7 @@
           </v-btn>
           <v-btn
             class="mx-2"
-            @click="removeContact(contact.id)"
+            @click="removeFavoriteContact(contact.id)"
             elevation="0"
             color="red-darken-4"
           >
@@ -220,7 +213,8 @@ export default {
 
   data: () => ({
     valid: true,
-    dialog: false,
+    cadUsuario: false,
+    cadPessoa: false,
     emailRules: [
       (v) => !!v || "Campo obrigatório",
       (v) => /.+@.+\..+/.test(v) || "E-mail precisa ser válido",
@@ -231,38 +225,30 @@ export default {
     ],
     required: [(v) => !!v || "Campo obrigatório"],
     form: {
-      email: "neto4971@gmail.com",
+      email: "",
       pessoa: {
-        cpf: "222.522.399-02",
+        cpf: "",
         endereco: {
-          bairro: "Santa Clara",
-          cep: "17255214",
-          cidade: "Bariri",
-          estado: "São Paulo",
-          logradouro: "Rua José Gonçalvez",
+          bairro: "",
+          cep: "",
+          cidade: "",
+          estado: "",
+          logradouro: "",
           numero: 401,
-          pais: "Brasil",
+          pais: "",
         },
         foto: {
-          id: "1212",
-          name: "teste",
+          id: "",
+          name: "",
           type: "",
         },
-        nome: "Neto",
+        nome: "",
       },
       privado: true,
-      tag: "Encontros na rua",
-      telefone: "14991886974",
-      tipoContato: "CELULAR",
-      usuario: {
-        cpf: "091.958.580-91",
-        dataNascimento: "1995-05-19",
-        email: "neto49712@gmail.com",
-        nome: "testeASD3123",
-        password: "123456",
-        telefone: "14991886974",
-        username: "testeDASE132",
-      },
+      tag: "",
+      telefone: "",
+      tipoContato: "",
+      usuario: {},
     },
     search: "",
     baseUrl: "https://metawaydemo.vps-kinghost.net:8485/api",
@@ -271,6 +257,7 @@ export default {
     fotos: [],
     contactsFavorites: [],
     file: [],
+    update: false,
   }),
 
   async beforeMount() {
@@ -283,6 +270,7 @@ export default {
 
   async mounted() {
     await this.getFavorite();
+    await this.getUser();
   },
 
   methods: {
@@ -303,14 +291,11 @@ export default {
     //     }
     //   }
     // },
-    async registerPerson() {
+    //
+    async updateContact() {
       const user = this.cookies.get("loggedUser");
       const auth = `${user.tokenType} ${user.accessToken}`;
-      const payload = {
-        tipos: ["ROLE_USER"],
-        usuario: this.usuario,
-      };
-
+      const payload = this.form;
       await $fetch(`${this.baseUrl}/pessoa/salvar`, {
         method: "POST",
         headers: {
@@ -318,41 +303,26 @@ export default {
         },
         body: payload,
       })
-        .then((resp) => {
-          this.form.pessoa = resp.object.pessoa;
+        .then(async () => {
+          await this.getFavorite();
+          await this.getUser();
+          this.update = false;
         })
-        .catch((err) => console.log(err));
+        .catch((err) => {
+          console.log(err);
+        });
     },
-    async registerUser() {
-      const user = this.cookies.get("loggedUser");
-      const auth = `${user.tokenType} ${user.accessToken}`;
-      const payload = {
-        tipos: ["ROLE_USER"],
-        usuario: this.form.usuario,
-      };
 
-      await $fetch(`${this.baseUrl}/usuario/salvar`, {
-        method: "POST",
-        headers: {
-          Authorization: auth,
-        },
-        body: payload,
-      })
-        .then((resp) => {
-          this.form.usuario = resp.object.usuario;
-        })
-        .catch((err) => console.log(err));
-    },
     async createContact() {
-      if (this.dialog) {
+      if (this.cadPessoa && !this.update) {
         const user = this.cookies.get("loggedUser");
         const auth = `${user.tokenType} ${user.accessToken}`;
         const foto = {
           file: this.file[0],
-          id: 19,
+          id: this.form.usuario.id,
         };
-        const payload = this.form.pessoa;
-        await $fetch(`${this.baseUrl}/foto/upload/19`, {
+
+        await $fetch(`${this.baseUrl}/foto/upload/${foto.id}`, {
           method: "POST",
           headers: {
             Authorization: auth,
@@ -361,28 +331,32 @@ export default {
           },
           body: foto,
         })
-          .then((resp) => {
-            console.log(resp);
+          .then(async (resp) => {
+            this.form.pessoa.foto = resp.object.foto;
+            const payload = this.form;
+            await $fetch(`${this.baseUrl}/pessoa/salvar`, {
+              method: "POST",
+              headers: {
+                Authorization: auth,
+              },
+              body: payload,
+            })
+              .then(async () => {
+                await this.getFavorite();
+                await this.getUser();
+              })
+              .catch((err) => {
+                console.log(err);
+              });
           })
           .catch((err) => {
             console.log(err);
           });
-        await $fetch(`${this.baseUrl}/pessoa/salvar`, {
-          method: "POST",
-          headers: {
-            Authorization: auth,
-          },
-          body: payload,
-        })
-          .then((res) => {
-            console.log(res);
-          })
-          .catch((err) => {
-            console.log(err);
-          });
-      } else this.dialog = true;
+      } else if (this.cadPessoa && this.update) {
+        this.updateContact();
+      } else this.cadPessoa = true;
     },
-    async removeContact(id) {
+    async removeFavoriteContact(id) {
       const user = this.cookies.get("loggedUser");
       const auth = `${user.tokenType} ${user.accessToken}`;
       await $fetch(`${this.baseUrl}/favorito/remover/${id}`, {
@@ -393,6 +367,27 @@ export default {
       })
         .then(() => {
           this.getFavorite();
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
+    async modifyContact(email) {
+      this.update = true;
+      const user = this.cookies.get("loggedUser");
+      const auth = `${user.tokenType} ${user.accessToken}`;
+      await $fetch(`${this.baseUrl}/contato/pesquisar`, {
+        method: "POST",
+        headers: {
+          Authorization: auth,
+        },
+        body: {
+          termo: email,
+        },
+      })
+        .then((resp) => {
+          this.form = resp[0];
+          this.cadPessoa = true;
         })
         .catch((err) => {
           console.log(err);
@@ -444,8 +439,6 @@ export default {
       })
         .then((resp) => {
           this.contactsFavorites = resp;
-
-          console.log(this.contactsFavorites);
           this.getContacts();
         })
         .catch((err) => {
@@ -486,7 +479,6 @@ export default {
         },
       })
         .then((resp) => {
-          console.log(resp);
           const img = URL.createObjectURL(resp);
           this.fotos.push(img);
         })
@@ -534,9 +526,7 @@ export default {
 .img-contact {
   border-radius: 50%;
 }
-.container {
-  padding: 50px 4vw 0 4vw;
-}
+
 table {
   width: 90vw;
   border-collapse: collapse;

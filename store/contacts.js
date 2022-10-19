@@ -10,7 +10,6 @@ export const useContactStore = defineStore({
     },
     actions: {
         setContacts(state, contacts) {
-            console.log(contacts)
             state.contacts = contacts
         }
         
