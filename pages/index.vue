@@ -34,7 +34,7 @@
             <v-btn
               :disabled="loading"
               :loading="loading"
-              color="indigo-lighten-1 px-5"
+              color="indigo-lighten-1"
               outlined
               fab
               class="mr-4"
@@ -57,16 +57,10 @@
 <script>
 import { useNuxtApp } from "#app";
 import { useCookies } from "vue3-cookies";
-// (v) =>
-//         /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{8,}$/.test(v) ||
-//         "A senha deve ter letras e números",
+
 export default {
   setup() {
     const { cookies } = useCookies();
-
-    definePageMeta({
-      middleware: "redirect",
-    });
     return { cookies };
   },
   data: () => ({
@@ -91,32 +85,6 @@ export default {
   },
 
   methods: {
-    async register() {
-      const user = JSON.parse(sessionStorage.getItem("user"));
-      const auth = `${user.tokenType} ${user.accessToken}`;
-      const payload = {
-        tipos: ["ROLE_ADMIN"],
-        usuario: {
-          cpf: "091.958.580-91",
-          dataNascimento: "1995-05-19",
-          email: "neto49712@gmail.com",
-          nome: "netoAdmin",
-          password: "123456",
-          telefone: "14991886974",
-          username: "netoAdmin",
-        },
-      };
-
-      await $fetch(`${this.baseUrl}/usuario/salvar`, {
-        method: "POST",
-        headers: {
-          Authorization: auth,
-        },
-        body: payload,
-      }).then((resp) => {
-        console.log(resp);
-      });
-    },
     async login() {
       this.loading = true;
       const user = {
@@ -144,8 +112,9 @@ export default {
             // };
             this.cookies.set("user", user);
           }
-          this.cookies.set("userAuth", resp);
-          this.$router.push("/logged");
+          this.cookies.set("loggedUser", resp);
+          this.cookies.set("userAuth", "authenticated");
+          this.$router.push("/home");
           this.$showToast(
             `Olá ${resp.username}, seja bem vindo(a)!`,
             "success",

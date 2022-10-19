@@ -6,7 +6,7 @@
         v-if="indexRoute"
       >
         <div>
-          <a @click="navigateTo('/logged')" class="nav-link">Home</a>
+          <a @click="navigateTo('/home')" class="nav-link">Home</a>
           <a @click="navigateTo('/')" class="nav-link">Meu Cadastro</a>
           <a @click="navigateTo('/')" class="nav-link">Usuários</a>
           <a @click="navigateTo('/')" class="nav-link">Pessoas</a>
@@ -24,16 +24,12 @@ import { useCookies } from "vue3-cookies";
 export default {
   setup() {
     const { cookies } = useCookies();
-
-    definePageMeta({
-      middleware: "redirect",
-    });
     return { cookies };
   },
 
   computed: {
     indexRoute() {
-      return this.$route.name !== "index";
+      return this.$route.name !== "index" && this.$route.name !== "403";
     },
     isMobile() {
       return (
@@ -48,8 +44,8 @@ export default {
     },
     loggout() {
       this.loading = true;
+      this.cookies.set("userAuth", null);
       this.cookies.set("user", null);
-
       this.$router.push("/");
     },
   },
