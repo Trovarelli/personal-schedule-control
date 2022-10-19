@@ -57,7 +57,9 @@
 <script>
 import { useNuxtApp } from "#app";
 import { useCookies } from "vue3-cookies";
-
+// (v) =>
+//         /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{8,}$/.test(v) ||
+//         "A senha deve ter letras e números",
 export default {
   setup() {
     const { cookies } = useCookies();
