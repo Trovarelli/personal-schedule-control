@@ -1,5 +1,11 @@
 <template>
   <div class="container d-flex flex-column justify-center align-end mt-12">
+    <div class="header-home text-center">
+      <h1>Home</h1>
+      <div>
+        Seja bem vindo(a)! Aqui voce pode localizar a gerenciar seus contatos :)
+      </div>
+    </div>
     <v-dialog v-model="cadPessoa" width="500" persistent>
       <template v-slot:activator="{ on, attrs }">
         <v-btn
@@ -145,6 +151,15 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <div class="searchbar mt-3">
+      <v-text-field
+        prepend-inner-icon="mdi-magnify"
+        v-model="search"
+        clearable
+        solo
+      >
+      </v-text-field>
+    </div>
 
     <table>
       <thead>
@@ -156,14 +171,17 @@
           <th>Ações</th>
         </tr>
       </thead>
-      <tr v-for="(contact, index) in contacts" :key="contact.id">
+      <tr v-if="contactsFiltered.length === 0">
+        <td colspan="5">Não foram encontrados resultados da sua busca :(</td>
+      </tr>
+      <tr v-else v-for="contact in contactsFiltered" :key="contact.id">
         <td class="d-flex flex-column justify-center align-center">
-          <img
-            :src="fotos[index]"
+          <div
+            :style="`background-image:url('${contact.fotoPerfil}')`"
             width="100"
             height="100"
             class="img-contact"
-          />
+          ></div>
         </td>
         <td>{{ contact.telefone }}</td>
         <td>{{ contact.email }}</td>
@@ -187,7 +205,7 @@
           </v-btn>
           <v-btn
             class="mx-2"
-            @click="removeFavoriteContact(contact.id)"
+            @click="removeContact(contact.id)"
             elevation="0"
             color="red-darken-4"
           >
@@ -253,12 +271,25 @@ export default {
     search: "",
     baseUrl: "https://metawaydemo.vps-kinghost.net:8485/api",
     contacts: [],
+    contactsFiltered: [],
     loading: false,
     fotos: [],
     contactsFavorites: [],
     file: [],
     update: false,
   }),
+
+  watch: {
+    search(v) {
+      if (v === "") {
+        this.contactsFiltered = this.contacts;
+      } else {
+        this.contactsFiltered = this.contacts.filter((el) => {
+          return el.email.toLowerCase().includes(v.toLowerCase());
+        });
+      }
+    },
+  },
 
   async beforeMount() {
     window.test = this;
@@ -292,6 +323,56 @@ export default {
     //   }
     // },
     //
+    async getContacts() {
+      this.loading = true;
+      const user = this.cookies.get("loggedUser");
+      const auth = `${user.tokenType} ${user.accessToken}`;
+      await $fetch(`${this.baseUrl}/contato/listar/${user.id}`, {
+        method: "GET",
+        headers: {
+          Authorization: auth,
+        },
+      })
+        .then((resp) => {
+          resp.forEach(async (el) => {
+            if (this.contactsFavorites.some((el2) => el2.id === el.id)) {
+              el.fotoPerfil = await this.getFoto(el.pessoa.id);
+              el.favorito = true;
+              this.contacts.push(el);
+            } else {
+              el.fotoPerfil = await this.getFoto(el.pessoa.id);
+              el.favorito = false;
+              this.contacts.push(el);
+            }
+          });
+          this.contacts = this.contacts.sort((a, b) => {
+            return Number(a) - Number(b);
+          });
+          this.contactsFiltered = this.contacts;
+        })
+        .catch((err) => {
+          console.log(err);
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
+    async deleteContact(id) {
+      const user = this.cookies.get("loggedUser");
+      const auth = `${user.tokenType} ${user.accessToken}`;
+      await $fetch(`${this.baseUrl}/contato/remover/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: auth,
+        },
+      })
+        .then(() => {
+          this.getFavorite();
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
     async updateContact() {
       const user = this.cookies.get("loggedUser");
       const auth = `${user.tokenType} ${user.accessToken}`;
@@ -312,7 +393,6 @@ export default {
           console.log(err);
         });
     },
-
     async createContact() {
       if (this.cadPessoa && !this.update) {
         const user = this.cookies.get("loggedUser");
@@ -355,22 +435,6 @@ export default {
       } else if (this.cadPessoa && this.update) {
         this.updateContact();
       } else this.cadPessoa = true;
-    },
-    async removeFavoriteContact(id) {
-      const user = this.cookies.get("loggedUser");
-      const auth = `${user.tokenType} ${user.accessToken}`;
-      await $fetch(`${this.baseUrl}/favorito/remover/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: auth,
-        },
-      })
-        .then(() => {
-          this.getFavorite();
-        })
-        .catch((err) => {
-          console.log(err);
-        });
     },
     async modifyContact(email) {
       this.update = true;
@@ -472,7 +536,7 @@ export default {
       this.loading = true;
       const user = this.cookies.get("loggedUser");
       const auth = `${user.tokenType} ${user.accessToken}`;
-      await $fetch(`${this.baseUrl}/foto/download/${id}`, {
+      const foto = await $fetch(`${this.baseUrl}/foto/download/${id}`, {
         method: "GET",
         headers: {
           Authorization: auth,
@@ -480,7 +544,7 @@ export default {
       })
         .then((resp) => {
           const img = URL.createObjectURL(resp);
-          this.fotos.push(img);
+          return img;
         })
         .catch((err) => {
           console.log(err);
@@ -488,47 +552,29 @@ export default {
         .finally(() => {
           this.loading = false;
         });
-    },
-    async getContacts() {
-      this.loading = true;
-      const user = this.cookies.get("loggedUser");
-      const auth = `${user.tokenType} ${user.accessToken}`;
-      await $fetch(`${this.baseUrl}/contato/listar/${user.id}`, {
-        method: "GET",
-        headers: {
-          Authorization: auth,
-        },
-      })
-        .then((resp) => {
-          resp.forEach(async (el) => {
-            await this.getFoto(el.pessoa.id);
-            if (this.contactsFavorites.some((el2) => el2.id === el.id)) {
-              el.favorito = true;
-              this.contacts.push(el);
-            } else {
-              el.favorito = false;
-              this.contacts.push(el);
-            }
-          });
-        })
-        .catch((err) => {
-          console.log(err);
-        })
-        .finally(() => {
-          this.loading = false;
-        });
+
+      return foto;
     },
   },
 };
 </script>
 
 <style scoped>
+.header-home {
+  width: 100%;
+}
+.searchbar {
+  width: 50%;
+}
 .img-contact {
   border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  background-size: cover;
 }
 
 table {
-  width: 90vw;
+  width: 100%;
   border-collapse: collapse;
   margin: 10px auto;
 }

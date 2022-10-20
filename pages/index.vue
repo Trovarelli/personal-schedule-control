@@ -62,6 +62,9 @@ import { useCookies } from "vue3-cookies";
 //         "A senha deve ter letras e números",
 export default {
   setup() {
+    definePageMeta({
+      middleware: "redirect",
+    });
     const { cookies } = useCookies();
     return { cookies };
   },
