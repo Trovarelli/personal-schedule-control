@@ -524,6 +524,10 @@ export default {
       })
         .then((resp) => {
           this.form.usuario = resp.object.usuario;
+          sessionStorage.setItem(
+            "userData",
+            JSON.stringify(resp.object.usuario)
+          );
         })
         .catch((err) => {
           console.log(err);

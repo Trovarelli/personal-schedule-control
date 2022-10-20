@@ -7,13 +7,17 @@
       >
         <div>
           <a @click="navigateTo('/home')" class="nav-link">Home</a>
-          <a @click="navigateTo('/')" class="nav-link">Meu Cadastro</a>
+
           <a @click="navigateTo('/')" class="nav-link">Usuários</a>
           <a @click="navigateTo('/')" class="nav-link">Pessoas</a>
           <a @click="navigateTo('/')" class="nav-link">Contatos</a>
         </div>
-
-        <a @click="loggout" class="nav-link r">Sair</a>
+        <div>
+          <a @click="navigateTo('/meuCadastro')" class="nav-link"
+            >Meu Cadastro</a
+          >
+          <a @click="loggout" class="nav-link r">Sair</a>
+        </div>
       </div>
     </div>
   </div>
