@@ -516,7 +516,7 @@ export default {
       this.loading = true;
       const user = this.cookies.get("loggedUser");
       const auth = `${user.tokenType} ${user.accessToken}`;
-      await $fetch(`${this.baseUrl}/usuario/buscar/22`, {
+      await $fetch(`${this.baseUrl}/usuario/buscar/${user.id}`, {
         method: "GET",
         headers: {
           Authorization: auth,
@@ -524,10 +524,7 @@ export default {
       })
         .then((resp) => {
           this.form.usuario = resp.object.usuario;
-          sessionStorage.setItem(
-            "userData",
-            JSON.stringify(resp.object.usuario)
-          );
+          sessionStorage.setItem("userData", JSON.stringify(resp.object));
         })
         .catch((err) => {
           console.log(err);
