@@ -8,8 +8,8 @@
           <a v-if="isAdmin" @click="navigateTo('/usuarios')" class="nav-link"
             >Usuários</a
           >
-          <a @click="navigateTo('/')" class="nav-link">Pessoas</a>
-          <a @click="navigateTo('/')" class="nav-link">Contatos</a>
+          <a @click="navigateTo('/pessoas')" class="nav-link">Pessoas</a>
+          <a @click="navigateTo('/contatos')" class="nav-link">Contatos</a>
         </div>
         <div>
           <a @click="navigateTo('/meuCadastro')" class="nav-link"
@@ -24,12 +24,17 @@
 
 <script>
 import { useCookies } from "vue3-cookies";
+import { useNuxtApp } from "#app";
 export default {
   setup() {
     const { cookies } = useCookies();
     return { cookies };
   },
-
+  data() {
+    return {
+      showToast: useNuxtApp().showToast,
+    };
+  },
   computed: {
     isAdmin() {
       const user = this.cookies.get("loggedUser");
@@ -50,6 +55,11 @@ export default {
       this.loading = true;
       this.cookies.set("userAuth", null);
       this.cookies.set("user", null);
+      this.$showToast(
+        `logout realizado com sucesso, volte sempre :)`,
+        "success",
+        4000
+      );
       this.$router.push("/");
     },
   },

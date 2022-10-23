@@ -56,7 +56,7 @@
           <v-select
             v-model="form.tipos[0]"
             :items="role_user"
-            label="Standard"
+            label="Tipo"
           ></v-select>
           <v-text-field
             color="indigo"

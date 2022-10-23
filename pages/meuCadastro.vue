@@ -108,6 +108,7 @@
 import { maska } from "maska";
 import { ref } from "vue";
 import { useCookies } from "vue3-cookies";
+import { useNuxtApp } from "#app";
 
 export default {
   directives: { maska },
@@ -145,7 +146,12 @@ export default {
       baseUrl: "https://metawaydemo.vps-kinghost.net:8485/api",
     };
   },
-
+  async beforeMount() {
+    const userCookie = this.cookies.get("userAuth");
+    if (userCookie !== "authenticated") {
+      this.$router.push("/403");
+    }
+  },
   async mounted() {
     await this.getUser();
   },

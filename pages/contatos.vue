@@ -1,9 +1,10 @@
 <template>
   <div class="container d-flex flex-column justify-center align-end mt-12">
     <div class="header-home text-center">
-      <h1>Home</h1>
+      <h1>Contatos</h1>
       <div>
-        Seja bem vindo(a)! Aqui voce pode localizar a gerenciar seus contatos :)
+        Olá, aqui você terá autonomia necessária para criar, atualizar e remover
+        contatos relacionados a sua conta :)
       </div>
     </div>
     <v-dialog v-model="cadPessoa" width="500" persistent>

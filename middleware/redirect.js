@@ -1,5 +1,5 @@
 export default defineNuxtRouteMiddleware((to) => {
-    const userCookie = useCookie("user")
+    const userCookie = useCookie("userAuth")
     if (userCookie.value !== undefined) {
         return '/home'
     } 
