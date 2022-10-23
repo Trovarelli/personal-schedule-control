@@ -92,32 +92,11 @@
           ></v-file-input> -->
           <v-card-title class="text-h5 grey lighten-2"> Endereço </v-card-title>
           <v-text-field
-            color="indigo"
-            v-model="form.pessoa.endereco.bairro"
-            :rules="required"
-            label="Bairro"
-            required
-          ></v-text-field>
-          <v-text-field
             v-maska="'#####-###'"
             color="indigo"
             v-model="form.pessoa.endereco.cep"
             :rules="required"
             label="CEP"
-            required
-          ></v-text-field>
-          <v-text-field
-            color="indigo"
-            v-model="form.pessoa.endereco.cidade"
-            :rules="required"
-            label="Cidade"
-            required
-          ></v-text-field>
-          <v-text-field
-            color="indigo"
-            v-model="form.pessoa.endereco.estado"
-            :rules="required"
-            label="Estado"
             required
           ></v-text-field>
           <v-text-field
@@ -134,6 +113,28 @@
             label="Número"
             required
           ></v-text-field>
+          <v-text-field
+            color="indigo"
+            v-model="form.pessoa.endereco.bairro"
+            :rules="required"
+            label="Bairro"
+            required
+          ></v-text-field>
+          <v-text-field
+            color="indigo"
+            v-model="form.pessoa.endereco.cidade"
+            :rules="required"
+            label="Cidade"
+            required
+          ></v-text-field>
+          <v-text-field
+            color="indigo"
+            v-model="form.pessoa.endereco.estado"
+            :rules="required"
+            label="Estado"
+            required
+          ></v-text-field>
+
           <v-text-field
             color="indigo"
             v-model="form.pessoa.endereco.pais"
@@ -299,6 +300,34 @@ export default {
         });
       }
     },
+  },
+
+  created() {
+    this.$watch("form.pessoa.endereco.cep", async (cep) => {
+      if (cep.length >= 9) {
+        this.loading = true;
+        await $fetch(`https://cdn.apicep.com/file/apicep/${cep}.json`, {
+          method: "GET",
+        })
+          .then((resp) => {
+            const address = {
+              cep: resp.code,
+              logradouro: resp.address,
+              bairro: resp.district,
+              cidade: resp.city,
+              estado: resp.state,
+              pais: "Brasil",
+            };
+
+            this.form.pessoa.endereco = address;
+          })
+          .catch((resp) => {
+            console.log(resp);
+            this.$showToast(`Cep não encontrado`, "error", 4000);
+          })
+          .finally(() => (this.loading = false));
+      }
+    });
   },
 
   async beforeMount() {

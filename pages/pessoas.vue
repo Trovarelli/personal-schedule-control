@@ -257,6 +257,34 @@ export default {
     await this.getPersons();
   },
 
+  created() {
+    this.$watch("form.endereco.cep", async (cep) => {
+      if (cep.length === 9) {
+        this.loading = true;
+        await $fetch(`https://cdn.apicep.com/file/apicep/${cep}.json`, {
+          method: "GET",
+        })
+          .then((resp) => {
+            const address = {
+              cep: resp.code,
+              logradouro: resp.address,
+              bairro: resp.district,
+              cidade: resp.city,
+              estado: resp.state,
+              pais: "Brasil",
+            };
+
+            this.form.endereco = address;
+          })
+          .catch((resp) => {
+            console.log(resp);
+            this.$showToast(`Cep não encontrado`, "error", 4000);
+          })
+          .finally(() => (this.loading = false));
+      }
+    });
+  },
+
   methods: {
     cancelEdit() {
       this.cadPerson = false;
