@@ -140,7 +140,6 @@ export default {
     },
     async validate() {
       const isValid = await this.$refs.form.validate();
-
       if (isValid.valid) {
         // this.register();
         this.login();

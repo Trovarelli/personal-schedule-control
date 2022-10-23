@@ -1,8 +1,9 @@
 <template>
   <div class="container">
-    <h1>Dados</h1>
+    <h1>Dados da conta</h1>
+    <p>Aqui é possivel alterar seus dados pessoais de cadastro</p>
     <div class="container-form">
-      <v-form ref="form" v-model="valid" lazy-validation class="pa-7">
+      <v-form ref="form" v-model="valid" lazy-validation class="pa-7 form">
         <div class="controller-form">
           <v-btn
             @click="saveEdit"
@@ -10,11 +11,12 @@
             :loading="loading"
             width="100px"
             class="my-5"
-            color="indigo-lighten-1"
+            :color="!edit ? 'success' : 'indigo-lighten-1'"
           >
             <span>{{ edit ? "Editar" : "Salvar" }}</span>
-            <v-icon v-if="edit" class="ml-2">mdi-pencil</v-icon>
-            <v-icon v-else class="ml-2">mdi-content-save</v-icon>
+            <v-icon class="ml-2">{{
+              edit ? "mdi-pencil" : "mdi-content-save"
+            }}</v-icon>
           </v-btn>
           <v-btn
             v-if="!edit"
@@ -29,7 +31,6 @@
             <v-icon class="ml-2">mdi-close</v-icon>
           </v-btn>
         </div>
-
         <v-text-field
           :readonly="edit"
           class="my-3"
@@ -98,6 +99,7 @@
           required
         ></v-text-field>
       </v-form>
+      <div class="form-bg"></div>
     </div>
   </div>
 </template>
@@ -140,45 +142,58 @@ export default {
       edit: true,
       loading: false,
       userData: JSON.parse(sessionStorage.getItem("userData")),
-      userDataBackup: JSON.parse(sessionStorage.getItem("userData")),
       baseUrl: "https://metawaydemo.vps-kinghost.net:8485/api",
     };
   },
+
   async mounted() {
     await this.getUser();
   },
   methods: {
     cancelEdit() {
       this.edit = true;
-      this.userData = this.userDataBackup;
+      this.getUser();
     },
     async saveEdit() {
+      const valid = await this.$refs.form.validate();
       if (!this.edit) {
-        const user = this.cookies.get("loggedUser");
-        console.log(user);
-        const auth = `${user.tokenType} ${user.accessToken}`;
-        this.loading = true;
-        await $fetch(`${this.baseUrl}/usuario/salvar`, {
-          method: "POST",
-          headers: {
-            Authorization: auth,
-          },
-          body: this.userData,
-        })
-          .then(async () => {
-            this.$showToast(`Cadastro atualizado com sucesso`, "success", 4000);
-            this.edit = true;
-            await this.getUser();
+        if (valid.valid) {
+          const user = this.cookies.get("loggedUser");
+          console.log(user);
+          const auth = `${user.tokenType} ${user.accessToken}`;
+          this.loading = true;
+          await $fetch(`${this.baseUrl}/usuario/salvar`, {
+            method: "POST",
+            headers: {
+              Authorization: auth,
+            },
+            body: this.userData,
           })
-          .catch((err) => {
-            console.log(err);
-            this.$showToast(
-              "Não foi posssivel processar sua solicitação, tente novamente mais tarde",
-              "error",
-              4000
-            );
-          })
-          .finally(() => (this.loading = false));
+            .then(async () => {
+              this.$showToast(
+                `Cadastro atualizado com sucesso`,
+                "success",
+                4000
+              );
+              this.edit = true;
+              await this.getUser();
+            })
+            .catch((err) => {
+              console.log(err);
+              this.$showToast(
+                "Não foi posssivel processar sua solicitação, tente novamente mais tarde",
+                "error",
+                4000
+              );
+            })
+            .finally(() => (this.loading = false));
+        } else {
+          this.$showToast(
+            "Por favor preencha corretamente os campos",
+            "error",
+            4000
+          );
+        }
       } else {
         this.edit = false;
       }
@@ -209,11 +224,23 @@ export default {
 
 <style scoped lang="scss">
 .container-form {
-  width: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 .controller-form {
   width: 100%;
   display: flex;
   justify-content: space-between;
+}
+.form {
+  width: 50%;
+}
+.form-bg {
+  background-image: url("./assets/img/form.png");
+  background-size: contain;
+  background-position: center;
+  width: 50%;
+  min-height: 100vh;
 }
 </style>

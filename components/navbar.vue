@@ -1,14 +1,13 @@
 <template>
   <div class="navigator">
-    <div v-if="!isMobile" v-bind:class="{ 'index-nav': !indexRoute }">
-      <div
-        class="nav-bar d-flex justify-space-between align-center"
-        v-if="indexRoute"
-      >
+    <div v-if="!isMobile" class="index-nav">
+      <div class="nav-bar d-flex justify-space-between align-center">
         <div>
           <a @click="navigateTo('/home')" class="nav-link">Home</a>
 
-          <a @click="navigateTo('/')" class="nav-link">Usuários</a>
+          <a v-if="isAdmin" @click="navigateTo('/usuarios')" class="nav-link"
+            >Usuários</a
+          >
           <a @click="navigateTo('/')" class="nav-link">Pessoas</a>
           <a @click="navigateTo('/')" class="nav-link">Contatos</a>
         </div>
@@ -32,8 +31,9 @@ export default {
   },
 
   computed: {
-    indexRoute() {
-      return this.$route.name !== "index" && this.$route.name !== "403";
+    isAdmin() {
+      const user = this.cookies.get("loggedUser");
+      return user?.tipos[0] === "ROLE_ADMIN";
     },
     isMobile() {
       return (

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <navbar></navbar>
+    <navbar v-if="indexRoute"></navbar>
     <div class="body">
       <div>
         <NuxtPage />
@@ -11,7 +11,11 @@
 
 <script>
 export default {
-  computed: {},
+  computed: {
+    indexRoute() {
+      return this.$route.name !== "index" && this.$route.name !== "403";
+    },
+  },
 };
 </script>
 

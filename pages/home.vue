@@ -82,6 +82,14 @@
             label="Tipo de contato (telefone, email etc..)"
             required
           ></v-text-field>
+          <!-- <v-file-input
+            :rules="imgRules"
+            accept="image/png, image/jpeg, image/bmp"
+            placeholder="Pick an avatar"
+            prepend-icon="mdi-camera"
+            label="Avatar"
+            v-model="file"
+          ></v-file-input> -->
           <v-card-title class="text-h5 grey lighten-2"> Endereço </v-card-title>
           <v-text-field
             color="indigo"
@@ -172,7 +180,7 @@
         </tr>
       </thead>
       <tr v-if="contactsFiltered.length === 0">
-        <td colspan="5">Não foram encontrados resultados da sua busca :(</td>
+        <td colspan="5">Nenhum contato encontrado :(</td>
       </tr>
       <tr v-else v-for="contact in contactsFiltered" :key="contact.id">
         <td class="d-flex flex-column justify-center align-center">
@@ -233,6 +241,12 @@ export default {
     valid: true,
     cadUsuario: false,
     cadPessoa: false,
+    imgRule: [
+      (value) =>
+        !value ||
+        value.size < 2000000 ||
+        "A foto deve ter um tamanho menor que 2 MB!",
+    ],
     emailRules: [
       (v) => !!v || "Campo obrigatório",
       (v) => /.+@.+\..+/.test(v) || "E-mail precisa ser válido",
@@ -245,6 +259,7 @@ export default {
     form: {
       email: "",
       pessoa: {
+        nome: "",
         cpf: "",
         endereco: {
           bairro: "",
@@ -252,15 +267,10 @@ export default {
           cidade: "",
           estado: "",
           logradouro: "",
-          numero: 401,
+          numero: "",
           pais: "",
         },
-        foto: {
-          id: "",
-          name: "",
-          type: "",
-        },
-        nome: "",
+        foto: null,
       },
       privado: true,
       tag: "",
@@ -275,7 +285,7 @@ export default {
     loading: false,
     fotos: [],
     contactsFavorites: [],
-    file: [],
+    file: null,
     update: false,
   }),
 
@@ -305,24 +315,8 @@ export default {
   },
 
   methods: {
-    //TODO cadastro de contatos :(
-    // selectImage(image) {
-    //   if (image !== undefined) {
-    //     const type = image?.type.split("/");
-    //     if (type[0] === "image") {
-    //       this.previewImage.grupo_bike = URL.createObjectURL(image);
-    //       this.$store.commit("bike/SET_CHANGE_IMAGE", true);
-    //       this.$store.commit("bike/SET_INVALID_FILE", false);
-    //     } else {
-    //       this.previewImage.grupo_bike = [];
-    //       this.$store.commit("bike/SET_INVALID_FILE", true);
-    //       this.$toast.warning(
-    //         "Por favor, insira uma imagem condizente com os formatos png ou jpg ou jpeg"
-    //       );
-    //     }
-    //   }
-    // },
-    //
+    //TODO cadastro de contatos
+
     async getContacts() {
       this.loading = true;
       const user = this.cookies.get("loggedUser");
@@ -397,37 +391,53 @@ export default {
       if (this.cadPessoa && !this.update) {
         const user = this.cookies.get("loggedUser");
         const auth = `${user.tokenType} ${user.accessToken}`;
-        const foto = {
-          file: this.file[0],
-          id: this.form.usuario.id,
-        };
-
-        await $fetch(`${this.baseUrl}/foto/upload/${foto.id}`, {
+        const payload = this.form.pessoa;
+        await $fetch(`${this.baseUrl}/pessoa/salvar`, {
           method: "POST",
           headers: {
             Authorization: auth,
-            "Content-Type":
-              "multipart/form-data -F foto=@1.jpg;type=image/jpeg",
           },
-          body: foto,
+          body: payload,
         })
           .then(async (resp) => {
-            this.form.pessoa.foto = resp.object.foto;
-            const payload = this.form;
-            await $fetch(`${this.baseUrl}/pessoa/salvar`, {
-              method: "POST",
-              headers: {
-                Authorization: auth,
-              },
-              body: payload,
-            })
-              .then(async () => {
-                await this.getFavorite();
-                await this.getUser();
+            this.form.pessoa = resp.object;
+            if (this.file !== null) {
+              await $fetch(`${this.baseUrl}/foto/upload/${resp.object.id}`, {
+                method: "POST",
+                headers: {
+                  Authorization: auth,
+                  "Content-Type":
+                    "multipart/form-data -F foto=@1.jpg;type=image/jpeg",
+                },
+                body: {
+                  foto: this.file,
+                },
               })
-              .catch((err) => {
-                console.log(err);
-              });
+                .then(async () => {
+                  await this.getFavorite();
+                  await this.getUser();
+                })
+                .catch((err) => {
+                  console.log(err);
+                });
+            } else {
+              await $fetch(`${this.baseUrl}/contato/salvar`, {
+                method: "POST",
+                headers: {
+                  Authorization: auth,
+                  "Content-Type":
+                    "multipart/form-data -F foto=@1.jpg;type=image/jpeg",
+                },
+                body: this.form,
+              })
+                .then(async () => {
+                  await this.getFavorite();
+                  await this.getUser();
+                })
+                .catch((err) => {
+                  console.log(err);
+                });
+            }
           })
           .catch((err) => {
             console.log(err);
