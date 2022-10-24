@@ -299,6 +299,8 @@ export default {
   }),
 
   watch: {
+    //TODO cadastro de contatos e cadastro de imagens
+
     search(v) {
       if (v === "") {
         this.contactsFiltered = this.contacts;

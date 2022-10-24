@@ -344,7 +344,7 @@ export default {
   },
 
   methods: {
-    //TODO cadastro de contatos
+    //TODO cadastro de contatos e cadastro de imagens
 
     async getContacts() {
       this.loading = true;
